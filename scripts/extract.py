@@ -136,6 +136,8 @@ if __name__ == "__main__":
         all_strings |= strings
 
 
+  print "Parsing done! {} strings found.".format(len(all_strings))
+
   if args.type == "po":
     po = generate_po(all_strings)
     with open("locales/messages.pot", "w") as f:
