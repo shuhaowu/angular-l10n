@@ -82,7 +82,7 @@ def extract_from_html(f, fn):
   parser = etree.HTMLParser()
   tree = etree.parse(StringIO(html), parser)
   strings = set()
-  for e in tree.xpath("//i18n") + tree.xpath("//*[@i18n]") + tree.xpath("//*[@class='i18n']"):
+  for e in tree.xpath("//i10n") + tree.xpath("//*[@i10n]") + tree.xpath("//*[@class='i10n']"):
     strings.add(LocaleString(e.text, fn, get_line_num(html, html.find(e.text))))
   return strings
 
