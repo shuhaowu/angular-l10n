@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+from datetime import datetime
 import json
 import os
 import re
@@ -82,16 +83,15 @@ def extract_from_html(f, fn):
   parser = etree.HTMLParser()
   tree = etree.parse(StringIO(html), parser)
   strings = set()
-  for e in tree.xpath("//i10n") + tree.xpath("//*[@i10n]") + tree.xpath("//*[@class='i10n']"):
+  for e in tree.xpath("//l10n") + tree.xpath("//*[@l10n]") + tree.xpath("//*[@class='l10n']"):
     strings.add(LocaleString(e.text, fn, get_line_num(html, html.find(e.text))))
   return strings
 
-def generate_po(strings):
-  header = """msgid ""
+HEADER = """msgid ""
 msgstr ""
 "Project-Id-Version: 1\\n"
-"Report-Msgid-Bugs-To: \\n"
-"POT-Creation-Date: %s\\n"
+"Report-Msgid-Bugs-To: First Last <email@email.com> \\n"
+"POT-Creation-Date: {}\\n"
 "PO-Revision-Date: YEAR-MM-DD HH:MM\\n"
 "Last-Translator: First Last <email@email.com>\\n"
 "Language-Team: Team <team@email.com>\\n"
@@ -100,9 +100,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\\n"
 "X-Generator: angular-l10n\\n"
 
-"""
+""".format(datetime.now().isoformat())
 
-  po = header
+def generate_po(strings):
+  po = HEADER
 
   for string in strings:
     po += string.po()
@@ -156,9 +157,11 @@ if __name__ == "__main__":
           pass
       except IOError:
         with open(fpath, "w") as f:
-          f.write("\n")
+          f.write(HEADER)
 
-      os.system("msgmerge locales/{}/LC_MESSAGES/messages.po locales/messages.pot > locales/{}/LC_MESSAGES/messages.po".format(language, language))
+      command = "msgmerge -U locales/{}/LC_MESSAGES/messages.po locales/messages.pot".format(language)
+      print command
+      os.system(command)
 
   elif args.type == "json":
     raise NotImplementedError
