@@ -7,6 +7,35 @@ from StringIO import StringIO
 
 from lxml import etree
 
+LANGUAGES = [
+  "bg",
+  "cs",
+  "de",
+  "el",
+  "en-US",
+  "es",
+  "eu",
+  "fr",
+  "ga-IE",
+  "hr",
+  "hu",
+  "it",
+  "ja",
+  "mk",
+  "my",
+  "nl",
+  "pl",
+  "pt-BR",
+  "ro",
+  "ru",
+  "sk",
+  "sr",
+  "th",
+  "tr",
+  "ur",
+  "zh-CN",
+  "zh-TW"
+]
 
 class LocaleString(object):
   def __init__(self, string, filename, linenum, comment=None):
@@ -15,7 +44,7 @@ class LocaleString(object):
     self.linenum = linenum
     self.comment = comment
 
-  def __str__(self):
+  def po(self):
     s = []
     if self.comment:
       for line in self.comment:
@@ -76,14 +105,22 @@ msgstr ""
   po = header
 
   for string in strings:
-    po += str(string)
+    po += string.po()
 
   return po
 
+def generate_json(strings):
+  j = {}
+
+  for string in strings:
+    j[string] = ""
+
+  return j
 
 if __name__ == "__main__":
   parser = argparse.ArgumentParser(description="Extracts strings from html partials and JavaScript files.")
   parser.add_argument("directories", nargs="+", help="The directories that needs to be examined for translation strings.")
+  parser.add_argument("-t", "--type", help="The type of the output to generate. Valid options are either 'po' or 'json'.", choices=["po", "json"], default="po")
   args = parser.parse_args()
 
   all_strings = set()
@@ -99,4 +136,27 @@ if __name__ == "__main__":
         all_strings |= strings
 
 
-  print generate_po(all_strings)
+  if args.type == "po":
+    po = generate_po(all_strings)
+    with open("locales/messages.pot", "w") as f:
+      f.write(po)
+
+    for language in LANGUAGES:
+      try:
+        os.mkdir(os.path.join("locales", language))
+        os.mkdir(os.path.join("locales", language, "LC_MESSAGES"))
+      except OSError:
+        pass # Exists already
+
+      fpath = os.path.join("locales", language, "LC_MESSAGES", "messages.po")
+      try:
+        with open(fpath):
+          pass
+      except IOError:
+        with open(fpath, "w") as f:
+          f.write("\n")
+
+      os.system("msgmerge locales/{}/LC_MESSAGES/messages.po locales/messages.pot > locales/{}/LC_MESSAGES/messages.po".format(language, language))
+
+  elif args.type == "json":
+    raise NotImplementedError
